@@ -9,21 +9,17 @@ from db_methods import Database
 from utils import reverse_status
 
 
-class Editor(QMainWindow):
+
+class Alert(QMainWindow):
     def __init__(self):
-        QMainWindow.__init__(self)
-
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("54"))
-
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
+       QMainWindow.__init__(self)
+       self.setCentralWidget(QLabel("Some lines is empty"))
 
 
 class New_note(QMainWindow):
-    def __init__(self):
+    def __init__(self, main_window):
         QMainWindow.__init__(self)
+        self.main_window = main_window
 
         layout = self.update_editor()
 
@@ -36,12 +32,17 @@ class New_note(QMainWindow):
         self.setCentralWidget(widget)
 
     def add_note(self):
-        database.insert_into_wishlist(name=self.name_text,
+        if (self.name_text is None or self.url_text is None or self.description_text is None):
+            self.window = Alert()
+            self.window.show()
+        else:
+            database.insert_into_wishlist(name=self.name_text,
                                       cost=int(self.cost_text),
                                       url=self.url_text,
                                       description=self.description_text)
-        self.close()
-
+            self.main_window.update_menu("Active")
+            self.close()
+            
     def update_name_text(self):
         self.name_text = self.name.text()
 
@@ -54,32 +55,79 @@ class New_note(QMainWindow):
     def update_description_text(self):
         self.description_text = self.description.text()
 
-    def update_editor(self):
+    def update_editor(self, name=None, cost=0, url=None, description=None):
         layout = QVBoxLayout()
+
+        self.name_text = name
+        self.cost_text = cost
+        self.url_text = url
+        self.description_text = description
+
 
         self.name = QLineEdit()
         self.name.setPlaceholderText("Name")
+        self.name.setText(self.name_text)
         self.name.textChanged.connect(self.update_name_text)
         layout.addWidget(self.name)
 
         self.cost = QSpinBox()
         self.cost.setMinimum(0)
         self.cost.setMaximum(100500)
-        self.cost.setValue(0)
+        self.cost.setValue(self.cost_text)
         self.cost.valueChanged.connect(self.update_cost_text)
         layout.addWidget(self.cost)
 
         self.url = QLineEdit()
         self.url.setPlaceholderText("URL")
+        self.url.setText(self.url_text)
         self.url.textChanged.connect(self.update_url_text)
         layout.addWidget(self.url)
 
         self.description = QLineEdit()
         self.description.setPlaceholderText("Description")
+        self.description.setText(self.description_text)
         self.description.textChanged.connect(self.update_description_text)
         layout.addWidget(self.description)
 
         return layout
+
+
+class Editor(New_note):
+    def __init__(self, note_id, main_window):
+        QMainWindow.__init__(self)
+        self.main_window = main_window
+        self.note_id = note_id
+
+        note_data = database.get_note_data(note_id)
+
+        layout = self.update_editor(name=note_data["name"],
+                                    cost=note_data["cost"],
+                                    url=note_data["url"],
+                                    description=note_data["description"])
+
+        add_note_button = QPushButton("Update note")
+        add_note_button.clicked.connect(self.update_note)
+        layout.addWidget(add_note_button)
+        
+        info = QLabel(f'Create: {note_data["tms_create"]} Update: {note_data["tms_update"]}')
+        layout.addWidget(info)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    def update_note(self):
+        if (self.name_text is None or self.url_text is None or self.description_text is None):
+            self.window = Alert()
+            self.window.show()
+        else:
+            database.update_wishlist(note_id=self.note_id,
+                                    name=self.name_text,
+                                    cost=int(self.cost_text),
+                                    url=self.url_text,
+                                    description=self.description_text)
+            self.main_window.update_menu("Active")
+            self.close()
 
 
 class Wishlist(QMainWindow):
@@ -95,11 +143,11 @@ class Wishlist(QMainWindow):
         webbrowser.open(url)
 
     def open_new_note(self):
-        self.new_note = New_note()
+        self.new_note = New_note(self)
         self.new_note.show()
     
-    def open_edit(self):
-        window = Editor()
+    def open_edit(self, note_id):
+        window = Editor(note_id, self)
         window.show()
         self.editors.append(window)
 
@@ -140,7 +188,7 @@ class Wishlist(QMainWindow):
 
             if status == "Active":
                 edit_button = QPushButton("Edit")
-                edit_button.clicked.connect(self.open_edit)
+                edit_button.clicked.connect(partial(self.open_edit, note["note_id"]))
                 note_layout.addWidget(edit_button)
             else:
                 remove_button = QPushButton("Remove")
