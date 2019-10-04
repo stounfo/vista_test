@@ -3,6 +3,8 @@ CREATE TABLE `wishlist` (
   `name` char(255) NOT NULL,
   `cost` int unsigned NOT NULL,
   `url` char(255) NOT NULL,
-  `note` longtext NULL,
-  `status` ENUM('Deleted', 'Done', 'Active')
+  `description` longtext NULL,
+  `tms_create` datetime NOT NULL,
+  `tms_update` datetime NOT NULL,
+  `status` ENUM('Deleted', 'Done', 'Active') NOT NULL
 ) AUTO_INCREMENT=1;
