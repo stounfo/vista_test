@@ -1,5 +1,5 @@
 CREATE TABLE `wishlist` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `note_id` int unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` char(255) NOT NULL,
   `cost` int unsigned NOT NULL,
   `url` char(255) NOT NULL,

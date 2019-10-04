@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
 wishlist = sa.Table("wishlist", sa.MetaData(),
-                    sa.Column("id", sa.Integer, primary_key=True),
+                    sa.Column("note_id", sa.Integer, primary_key=True),
                     sa.Column("name", sa.String),
                     sa.Column("cost", sa.Integer),
                     sa.Column("url", sa.String),
