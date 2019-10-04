@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 from sqlalchemy import create_engine
-
+from utils import datetime_now
 from orm_tables import wishlist
 
 
@@ -25,6 +25,16 @@ class Database():
         query = wishlist.update().values(status=status).where(wishlist.c.note_id == note_id)
         self._conn.execute(query)
 
+    def insert_into_wishlist(self, name, cost, url, description):
+        query = wishlist.insert().values(name=name,
+                                         cost=cost,
+                                         url=url,
+                                         description=description,
+                                         tms_create=datetime_now(),
+                                         tms_update=datetime_now(),
+                                         status="Active")
+        self._conn.execute(query)
+
 
 
 if __name__ == "__main__":    
@@ -34,4 +44,5 @@ if __name__ == "__main__":
                 host="localhost",
                 port="3306",
                 database="wishlist")
-    print(a.select_from_wishlist())
+
+    print(a.insert_into_wishlist("a", 44, "localhost", "spas"))

@@ -25,12 +25,61 @@ class New_note(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
 
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("54"))
+        layout = self.update_editor()
+
+        add_note_button = QPushButton("Add note")
+        add_note_button.clicked.connect(self.add_note)
+        layout.addWidget(add_note_button)
 
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+
+    def add_note(self):
+        database.insert_into_wishlist(name=self.name_text,
+                                      cost=int(self.cost_text),
+                                      url=self.url_text,
+                                      description=self.description_text)
+        self.close()
+
+    def update_name_text(self):
+        self.name_text = self.name.text()
+
+    def update_cost_text(self):
+        self.cost_text = self.cost.value()
+
+    def update_url_text(self):
+        self.url_text = self.url.text()
+
+    def update_description_text(self):
+        self.description_text = self.description.text()
+
+    def update_editor(self):
+        layout = QVBoxLayout()
+
+        self.name = QLineEdit()
+        self.name.setPlaceholderText("Name")
+        self.name.textChanged.connect(self.update_name_text)
+        layout.addWidget(self.name)
+
+        self.cost = QSpinBox()
+        self.cost.setMinimum(0)
+        self.cost.setMaximum(100500)
+        self.cost.setValue(0)
+        self.cost.valueChanged.connect(self.update_cost_text)
+        layout.addWidget(self.cost)
+
+        self.url = QLineEdit()
+        self.url.setPlaceholderText("URL")
+        self.url.textChanged.connect(self.update_url_text)
+        layout.addWidget(self.url)
+
+        self.description = QLineEdit()
+        self.description.setPlaceholderText("Description")
+        self.description.textChanged.connect(self.update_description_text)
+        layout.addWidget(self.description)
+
+        return layout
 
 
 class Wishlist(QMainWindow):
@@ -77,10 +126,7 @@ class Wishlist(QMainWindow):
         main_menu = QWidget()
         main_menu.setLayout(layout)
 
-        #=====================
-
         layout = QVBoxLayout()
-
         for note in database.select_from_wishlist([status]):
             one_note = QWidget()
             note_layout = QHBoxLayout()
@@ -102,7 +148,9 @@ class Wishlist(QMainWindow):
                 note_layout.addWidget(remove_button)
 
             done_button = QPushButton(f"Add to {reverse_status(status).lower()}")
-            done_button.clicked.connect(partial(self.change_status, note["note_id"], reverse_status(status)))
+            done_button.clicked.connect(partial(self.change_status, 
+                                                note["note_id"],
+                                                reverse_status(status)))
             note_layout.addWidget(done_button)
 
             one_note.setLayout(note_layout)
