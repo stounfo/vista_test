@@ -35,6 +35,24 @@ class Database():
                                          status="Active")
         self._conn.execute(query)
 
+    def get_note_data(self, note_id):
+        note = dict()
+        query = sa.select([wishlist]).where(wishlist.c.note_id == note_id)
+        for row in self._conn.execute(query):
+            for column, value in row.items():
+                note[column] = value
+        return note
+
+    def update_wishlist(self, note_id, name, cost, url, description):
+        query = wishlist.update().values(name=name,
+                                         cost=cost,
+                                         url=url,
+                                         description=description,
+                                         tms_update=datetime_now()).where(
+                                             wishlist.c.note_id == note_id
+                                         )
+        self._conn.execute(query)
+
 
 
 if __name__ == "__main__":    
@@ -45,4 +63,4 @@ if __name__ == "__main__":
                 port="3306",
                 database="wishlist")
 
-    print(a.insert_into_wishlist("a", 44, "localhost", "spas"))
+    print(a.get_note_data(1))
