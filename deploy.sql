@@ -3,7 +3,7 @@ CREATE TABLE `wishlist` (
   `name` char(255) NOT NULL,
   `cost` int unsigned NOT NULL,
   `url` char(255) NOT NULL,
-  `description` longtext NULL,
+  `description` longtext NOT NULL,
   `tms_create` datetime NOT NULL,
   `tms_update` datetime NOT NULL,
   `status` ENUM('Deleted', 'Done', 'Active') NOT NULL
