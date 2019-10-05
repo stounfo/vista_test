@@ -44,11 +44,11 @@ class New_note(QMainWindow):
         QMainWindow.__init__(self)
         self._render()
     
-    def _render(self):
-        self.name = LineEdit("Name", None)
-        self.cost = SpinBox(0, 0, 100500)
-        self.url = LineEdit("url", None)
-        self.description = LineEdit("Description", None)
+    def _render(self, name=None, cost=0, url=None, description=None):
+        self.name = LineEdit("Name", name)
+        self.cost = SpinBox(cost, 0, 100500)
+        self.url = LineEdit("url", url)
+        self.description = LineEdit("Description", description)
         button = Button("Add", self._button_func)
         self.setCentralWidget(create_v_widget(self.name, self.cost, self.url, self.description, button))
 
@@ -66,41 +66,23 @@ class New_note(QMainWindow):
 
 
 class Editor(New_note):
-    def __init__(self, note_id, main_window):
+    def __init__(self, note_id, name, cost, url, description):
         QMainWindow.__init__(self)
-        self.main_window = main_window
         self.note_id = note_id
+        print(note_id)
+        self._render(name, cost, url, description)
 
-        note_data = database.get_note_data(note_id)
-
-        layout = self.update_editor(name=note_data["name"],
-                                    cost=note_data["cost"],
-                                    url=note_data["url"],
-                                    description=note_data["description"])
-
-        add_note_button = QPushButton("Update note")
-        add_note_button.clicked.connect(self.update_note)
-        layout.addWidget(add_note_button)
-        
-        info = QLabel(f'Create: {note_data["tms_create"]} Update: {note_data["tms_update"]}')
-        layout.addWidget(info)
-
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
-
-    def update_note(self):
-        if (self.name_text is None or self.url_text is None or self.description_text is None):
-            self.window = Alert("Some lines are empty")
-            self.window.show()
+    def _button_func(self):
+        if self.name.text() == "" or self.url.text() == "" or self.description.text() == "":
+            self.alert = Alert("Some lines are empty")
+            self.alert.show()
         else:
-            database.update_wishlist(note_id=self.note_id,
-                                    name=self.name_text,
-                                    cost=int(self.cost_text),
-                                    url=self.url_text,
-                                    description=self.description_text)
+            self._update_note()
             main_window.render_active_notes()
             self.close()
+    
+    def _update_note(self):
+        database.update_wishlist(self.note_id, self.name.text(), self.cost.value(), self.url.text(), self.description.text())
 
 
 class Main_window(QMainWindow):
@@ -129,7 +111,8 @@ class Main_window(QMainWindow):
             description_label = QLabel(note["description"])
 
             url_button = Button("URL", self._open_url_in_webbrowser, note["url"])
-            edit_button = Button("Edit", self._edit_note, note["note_id"])
+            edit_button = Button("Edit", self._edit_note, note["note_id"],
+                                        note["name"], note["cost"], note["url"], note["description"])
             add_to_done_button = Button("Done", self._change_note_status, note["note_id"], "Done")
 
             layout.addWidget(create_h_widget(name_label, cost_label, description_label, 
@@ -165,8 +148,8 @@ class Main_window(QMainWindow):
         self.new_note = New_note()
         self.new_note.show()
 
-    def _edit_note(self, note_id):
-        self.edit_note = Editor(note_id, self)
+    def _edit_note(self, note_id, name, cost, url, description):
+        self.edit_note = Editor(note_id, name, cost, url, description)
         self.edit_note.show()
 
     def _change_note_status(self, note_id, status):
