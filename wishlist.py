@@ -6,14 +6,22 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from db_methods import Database
-from utils import reverse_status
+from utils import create_h_widget, create_v_widget
 
+
+class Button(QPushButton):
+    def __init__(self, text, func, *args):
+        QPushButton.__init__(self, text)
+        self.clicked.connect(partial(func, *args))
 
 
 class Alert(QMainWindow):
-    def __init__(self):
+    def __init__(self, text):
        QMainWindow.__init__(self)
-       self.setCentralWidget(QLabel("Some lines is empty"))
+       self.setCentralWidget(create_h_widget(QLabel(text), Button("Ok", self._close_window)))
+
+    def _close_window(self):
+        self.close()
 
 
 class New_note(QMainWindow):
@@ -130,92 +138,84 @@ class Editor(New_note):
             self.close()
 
 
-class Wishlist(QMainWindow):
-    editors = list()
-
+class Main_window(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
-        self.setWindowTitle("Wishlist")
+        self.navbar_widget = self.render_navbar()
+        self.render_active_notes()
 
-        self.update_menu("Active")
-
-    def open_webbrowser(self, url):
-        webbrowser.open(url)
-
-    def open_new_note(self):
-        self.new_note = New_note(self)
-        self.new_note.show()
+    def render_navbar(self):
+        active_button = Button("Active", self.render_active_notes)
+        done_button = Button("Done", self.render_done_notes)
+        new_note_button = Button("New note", self._create_note)
+        return create_h_widget(active_button, done_button, new_note_button)
     
-    def open_edit(self, note_id):
-        window = Editor(note_id, self)
-        window.show()
-        self.editors.append(window)
-
-    def change_status(self, note_id, status):
-        database.change_note_status(note_id, status)
-        self.update_menu(reverse_status(status))
-
-
-    def update_menu(self, status):
-        layout = QHBoxLayout()
-
-        active_button = QPushButton("Active")
-        active_button.clicked.connect(partial(self.update_menu, "Active"))
-        layout.addWidget(active_button)
-
-        done_button = QPushButton("Done")
-        done_button.clicked.connect(partial(self.update_menu, "Done"))
-        layout.addWidget(done_button)
-
-        new_note_button = QPushButton("New note")
-        new_note_button.clicked.connect(self.open_new_note)
-        layout.addWidget(new_note_button)
-
-        main_menu = QWidget()
-        main_menu.setLayout(layout)
+    def render_active_notes(self):
+        notes_data = self._get_notes_data("Active")
+        if notes_data == []:
+            self.setCentralWidget(create_v_widget(self.navbar_widget, 
+                                                        QLabel("There are no notes active")))
+            return None
 
         layout = QVBoxLayout()
-        for note in database.select_from_wishlist([status]):
-            one_note = QWidget()
-            note_layout = QHBoxLayout()
-            note_layout.addWidget(QLabel(str(note["name"])))
-            note_layout.addWidget(QLabel(str(note["cost"])))
-            note_layout.addWidget(QLabel(str(note["description"])))
-            
-            url_button = QPushButton("URL")
-            url_button.clicked.connect(partial(self.open_webbrowser, note["url"]))
-            note_layout.addWidget(url_button)
+        for note in notes_data:
+            name_label = QLabel(note["name"])
+            cost_label = QLabel(str(note["cost"]))
+            description_label = QLabel(note["description"])
 
-            if status == "Active":
-                edit_button = QPushButton("Edit")
-                edit_button.clicked.connect(partial(self.open_edit, note["note_id"]))
-                note_layout.addWidget(edit_button)
-            else:
-                remove_button = QPushButton("Remove")
-                remove_button.clicked.connect(partial(self.change_status, note["note_id"], "Deleted"))
-                note_layout.addWidget(remove_button)
+            url_button = Button("URL", self._open_url_in_webbrowser, note["url"])
+            edit_button = Button("Edit", self._edit_note, note["note_id"])
+            add_to_done_button = Button("Done", self._change_note_status, note["note_id"], "Done")
 
-            done_button = QPushButton(f"Add to {reverse_status(status).lower()}")
-            done_button.clicked.connect(partial(self.change_status, 
-                                                note["note_id"],
-                                                reverse_status(status)))
-            note_layout.addWidget(done_button)
-
-            one_note.setLayout(note_layout)
-            layout.addWidget(one_note)
-        
-        notes_menu = QWidget()
-        notes_menu.setLayout(layout)
-        
-        layout = QVBoxLayout()
-        layout.addWidget(main_menu)
-        layout.addWidget(notes_menu)
-
+            layout.addWidget(create_h_widget(name_label, cost_label, description_label, 
+                                                    url_button, edit_button, add_to_done_button))
         widget = QWidget()
         widget.setLayout(layout)
+        self.setCentralWidget(create_v_widget(self.navbar_widget, widget))
 
-        self.setCentralWidget(widget)
+    def render_done_notes(self):
+        notes_data = self._get_notes_data("Done")
         
+        if notes_data == []:
+            self.setCentralWidget(create_v_widget(self.navbar_widget, QLabel("There are no notes done")))
+            return None
+
+        layout = QVBoxLayout()
+        for note in notes_data:
+            name_label = QLabel(note["name"])
+            cost_label = QLabel(str(note["cost"]))
+            description_label = QLabel(note["description"])
+
+            url_button = Button("URL", self._open_url_in_webbrowser, note["url"])
+            remove_button = Button("Remove", self._change_note_status, note["note_id"], "Deleted")
+            add_to_done_button = Button("Add to active", self._change_note_status, note["note_id"], "Active")
+
+            layout.addWidget(create_h_widget(name_label, cost_label, description_label, 
+                                                    url_button, remove_button, add_to_done_button))
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(create_v_widget(self.navbar_widget, widget))
+
+    def _create_note(self):
+        pass
+
+    def _edit_note(self, note_id):
+        print(note_id)
+
+    def _change_note_status(self, note_id, status):
+        database.change_note_status(note_id, status)
+        if status == "Done":
+            self.setCentralWidget(create_v_widget(self.navbar_widget, self.render_active_notes()))
+        elif status == "Active":
+            self.setCentralWidget(create_v_widget(self.navbar_widget, self.render_done_notes()))
+        elif status == "Deleted":
+            self.setCentralWidget(create_v_widget(self.navbar_widget, self.render_done_notes()))
+
+    def _get_notes_data(self, status):
+        return database.select_from_wishlist([status])
+    
+    def _open_url_in_webbrowser(self, url):
+        webbrowser.open(url)        
 
 
 
@@ -228,6 +228,6 @@ if __name__ == '__main__':
             database="wishlist")
 
     app = QApplication([])
-    window = Wishlist()
+    window = Main_window()
     window.show()
     app.exec_()
