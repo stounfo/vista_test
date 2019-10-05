@@ -18,7 +18,7 @@ class Button(QPushButton):
 class Alert(QMainWindow):
     def __init__(self, text):
        QMainWindow.__init__(self)
-       self.setCentralWidget(create_h_widget(QLabel(text), Button("Ok", self._close_window)))
+       self.setCentralWidget(create_v_widget(QLabel(text), Button("Ok", self._close_window)))
 
     def _close_window(self):
         self.close()
@@ -41,14 +41,14 @@ class New_note(QMainWindow):
 
     def add_note(self):
         if (self.name_text is None or self.url_text is None or self.description_text is None):
-            self.window = Alert()
+            self.window = Alert("Some lines are empty")
             self.window.show()
         else:
             database.insert_into_wishlist(name=self.name_text,
                                       cost=int(self.cost_text),
                                       url=self.url_text,
                                       description=self.description_text)
-            self.main_window.update_menu("Active")
+            main_window.render_active_notes()
             self.close()
             
     def update_name_text(self):
@@ -197,7 +197,8 @@ class Main_window(QMainWindow):
         self.setCentralWidget(create_v_widget(self.navbar_widget, widget))
 
     def _create_note(self):
-        pass
+        self.new_note = New_note(self)
+        self.new_note.show()
 
     def _edit_note(self, note_id):
         print(note_id)
@@ -205,11 +206,11 @@ class Main_window(QMainWindow):
     def _change_note_status(self, note_id, status):
         database.change_note_status(note_id, status)
         if status == "Done":
-            self.setCentralWidget(create_v_widget(self.navbar_widget, self.render_active_notes()))
+            self.render_active_notes()
         elif status == "Active":
-            self.setCentralWidget(create_v_widget(self.navbar_widget, self.render_done_notes()))
+            self.render_done_notes()
         elif status == "Deleted":
-            self.setCentralWidget(create_v_widget(self.navbar_widget, self.render_done_notes()))
+            self.render_done_notes()
 
     def _get_notes_data(self, status):
         return database.select_from_wishlist([status])
@@ -228,6 +229,6 @@ if __name__ == '__main__':
             database="wishlist")
 
     app = QApplication([])
-    window = Main_window()
-    window.show()
+    main_window = Main_window()
+    main_window.show()
     app.exec_()
