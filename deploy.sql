@@ -8,3 +8,6 @@ CREATE TABLE `wishlist` (
   `tms_update` datetime NOT NULL,
   `status` ENUM('Deleted', 'Done', 'Active') NOT NULL
 ) AUTO_INCREMENT=1;
+
+INSERT INTO `wishlist` (`name`, `cost`, `url`, `description`, `tms_create`, `tms_update`, `status`)
+VALUES ('My GitHub', '0', 'https://github.com/stounfo', 'This is my GitHub link.', '2019-10-04 20:30:00', '2019-10-04 20:30:00', 3);

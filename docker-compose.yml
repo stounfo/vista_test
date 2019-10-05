@@ -17,11 +17,3 @@ services:
       - 3306:3306
     volumes:
       - "./deploy.sql:/docker-entrypoint-initdb.d/1-deploy.sql:ro"
-
-  wishlist-adminer:
-    container_name: wishlist-adminer
-    image: adminer
-    ports:
-      - 1234:8080
-    depends_on:
-      - wishlist-db
