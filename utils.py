@@ -1,15 +1,21 @@
 from datetime import datetime
-
-
-
-def reverse_status(status):
-    if status == "Deleted":
-        return "Done"
-    elif status == "Active":
-        return "Done"
-    else:
-        return "Active"
-
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 def datetime_now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def create_h_widget(*args):
+    layout = QHBoxLayout()
+    for widget in args:
+        layout.addWidget(widget)
+    widget = QWidget()
+    widget.setLayout(layout)
+    return widget
+
+def create_v_widget(*args):
+    layout = QVBoxLayout()
+    for widget in args:
+        layout.addWidget(widget)
+    widget = QWidget()
+    widget.setLayout(layout)
+    return widget
