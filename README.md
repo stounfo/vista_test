@@ -6,4 +6,4 @@ Test CRUD application for Vista
     docker-compose build && docker-compose up
     python wishlist.py
 
-Server runs  at localhost:3306
+Database runs  at localhost:3306
