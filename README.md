@@ -3,6 +3,7 @@ Test CRUD application for Vista
 
 ## Run:
     cd wishlist
+    pip install -r requirements.txt
     docker-compose build && docker-compose up
     python wishlist.py
 
