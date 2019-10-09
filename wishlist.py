@@ -173,7 +173,7 @@ if __name__ == '__main__':
     database = Database(db_type="mysql+pymysql",
             name="wishlist",
             password="wishlist",
-            host="wishlist",
+            host="localhost",
             port="3306",
             database="wishlist")
 
