@@ -171,9 +171,9 @@ class Main_window(QMainWindow):
 
 if __name__ == '__main__':
     database = Database(db_type="mysql+pymysql",
-            name="root",
-            password="asd",
-            host="localhost",
+            name="wishlist",
+            password="wishlist",
+            host="wishlist",
             port="3306",
             database="wishlist")
 
